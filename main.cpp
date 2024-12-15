@@ -30,12 +30,22 @@ int main() {
     // Запуск додаткового потоку для завершення програми
     std::thread inputThread(stopProgram);
 
-    while (running) {
-        auto data = uartReader.readData();
+    std::vector<uint8_t> demoFrame = {0xC8, 0x14, 0x16, 0x01, 0x02, 0x03};
 
+    while (running) {
+        // Передача кадру
+        uartReader.sendFrame(demoFrame);
+        std::cout << "Sent frame: ";
+        for (auto byte : demoFrame) {
+            std::cout << std::hex << std::uppercase << static_cast<int>(byte) << " ";
+        }
+        std::cout << std::endl;
+
+        // Прийом кадру
+        auto data = uartReader.readData();
         if (!data.empty()) {
-            std::cout << "Received: ";
-            for (uint8_t byte : data) {
+            std::cout << "Received frame: ";
+            for (auto byte : data) {
                 std::cout << std::hex << std::uppercase << static_cast<int>(byte) << " ";
             }
             std::cout << std::endl;
