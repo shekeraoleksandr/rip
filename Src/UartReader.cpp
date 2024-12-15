@@ -16,8 +16,13 @@ bool UartReader::initialize() {
         return false;
     }
 
+    // Створюємо буфер для зняття константності
+    char portBuffer[256];
+    strncpy(portBuffer, portName.c_str(), sizeof(portBuffer));
+    portBuffer[sizeof(portBuffer) - 1] = '\0';  // Гарантія завершення рядка
+
     // Відкриваємо UART порт
-    uartHandle = serOpen(portName.c_str(), baudRate, 0);
+    uartHandle = serOpen(portBuffer, baudRate, 0);
     if (uartHandle < 0) {
         std::cerr << "Error: Failed to open UART port: " << portName << std::endl;
         gpioTerminate();
