@@ -1,30 +1,23 @@
 #ifndef UART_READER_H
 #define UART_READER_H
 
-#include <iostream>
 #include <vector>
-#include <libserialport.h>
-
-// GPIO для керування напрямком
-#define GPIO_DIRECTION_PIN 18  // GPIO 18 для перемикання TX/RX
+#include <cstdint>
 
 class UartReader {
 public:
-    UartReader(const std::string& port, int baudrate);
+    UartReader(int gpioPin, int baudrate);
     ~UartReader();
 
-    bool initialize();  // Ініціалізація UART і GPIO
-    std::vector<uint8_t> readData();  // Зчитування даних
-    void sendFrame(const std::vector<uint8_t>& frame);  // Передача даних
+    void initialize();                 // Ініціалізація GPIO
+    std::vector<uint8_t> readData();   // Зчитування даних
 
 private:
-    void initGPIO();         // Ініціалізація GPIO
-    void enableTransmit();   // Увімкнення режиму передачі
-    void enableReceive();    // Увімкнення режиму прийому
+    int dataPin;      // GPIO-пін для зчитування
+    int baudRate;     // Швидкість передачі (в бодах)
+    int bitDelay;     // Затримка між бітами у мікросекундах
 
-    std::string portName;
-    int baudRate;
-    sp_port* uartPort;
+    uint8_t readByte();                // Зчитування одного байту
 };
 
 #endif // UART_READER_H
