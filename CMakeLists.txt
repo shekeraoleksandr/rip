@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 # Підключення libserialport
 find_package(PkgConfig REQUIRED)
+find_package(Threads REQUIRED)
 pkg_check_modules(SERIALPORT REQUIRED libserialport)
 
 include_directories(${SERIALPORT_INCLUDE_DIRS})
@@ -14,3 +15,4 @@ add_executable(${PROJECT_NAME} main.cpp
         Src/UartReader.cpp
         Src/UartReader.h)
 target_link_libraries(${PROJECT_NAME} ${SERIALPORT_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
