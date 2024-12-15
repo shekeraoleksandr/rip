@@ -1,23 +1,50 @@
-#include <iostream>
 #include "Src/UartReader.h"
+#include <iostream>
+#include <thread>
+#include <atomic>
+
+// Глобальна змінна для контролю програми
+std::atomic<bool> running(true);
+
+void stopProgram() {
+    std::cout << "Press 'q' and Enter to stop the program..." << std::endl;
+    char input;
+    while (std::cin >> input) {
+        if (input == 'q') {
+            running = false;
+            break;
+        }
+    }
+}
 
 int main() {
-    const int dataPin = 15;  // GPIO-пін для зчитування
-    const int baudRate = 420000;  // Швидкість UART (наприклад, 9600 бод)
+    const std::string uartPort = "/dev/serial0"; // UART порт
+    const int baudRate = 420000;                // Швидкість CRSF
 
-    UartReader uart(dataPin, baudRate);
+    UartReader uartReader(uartPort, baudRate);
 
-    uart.initialize();
-
-    std::cout << "Starting to read data from GPIO pin " << dataPin << "..." << std::endl;
-
-    auto receivedData = uart.readData();
-
-    std::cout << "Full data received: ";
-    for (uint8_t byte : receivedData) {
-        std::cout << std::hex << static_cast<int>(byte) << " ";
+    if (!uartReader.initialize()) {
+        return -1;
     }
-    std::cout << std::endl;
 
+    // Запуск окремого потоку для завершення програми
+    std::thread inputThread(stopProgram);
+
+    while (running) {
+        auto data = uartReader.readData();
+
+        if (!data.empty()) {
+            std::cout << "Received: ";
+            for (uint8_t byte : data) {
+                std::cout << std::hex << std::uppercase << static_cast<int>(byte) << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    // Очікуємо завершення потоку
+    inputThread.join();
+
+    std::cout << "Program stopped." << std::endl;
     return 0;
 }

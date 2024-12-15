@@ -2,22 +2,21 @@
 #define UART_READER_H
 
 #include <vector>
-#include <cstdint>
+#include <string>
 
 class UartReader {
 public:
-    UartReader(int gpioPin, int baudrate);
+    UartReader(const std::string& port, int baudrate);
     ~UartReader();
 
-    void initialize();                 // Ініціалізація GPIO
-    std::vector<uint8_t> readData();   // Зчитування даних
+    bool initialize();               // Ініціалізація UART
+    std::vector<uint8_t> readData(); // Читання даних
+    void closePort();                // Закриття UART
 
 private:
-    int dataPin;      // GPIO-пін для зчитування
-    int baudRate;     // Швидкість передачі (в бодах)
-    int bitDelay;     // Затримка між бітами у мікросекундах
-
-    uint8_t readByte();                // Зчитування одного байту
+    std::string portName;
+    int baudRate;
+    int uartHandle;                  // Об'єкт UART
 };
 
 #endif // UART_READER_H
