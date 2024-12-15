@@ -18,8 +18,8 @@ void stopProgram() {
 }
 
 int main() {
-    const std::string uartPort = "/dev/serial0"; // UART порт
-    const int baudRate = 420000;                // Швидкість CRSF
+    const std::string uartPort = "/dev/serial0";  // UART порт
+    const int baudRate = 420000;                 // Швидкість зв'язку
 
     UartReader uartReader(uartPort, baudRate);
 
@@ -27,7 +27,7 @@ int main() {
         return -1;
     }
 
-    // Запуск окремого потоку для завершення програми
+    // Запуск окремого потоку для зупинки програми
     std::thread inputThread(stopProgram);
 
     while (running) {
@@ -42,7 +42,7 @@ int main() {
         }
     }
 
-    // Очікуємо завершення потоку
+    // Чекаємо завершення потоку
     inputThread.join();
 
     std::cout << "Program stopped." << std::endl;

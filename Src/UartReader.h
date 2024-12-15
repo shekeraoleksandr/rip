@@ -1,8 +1,8 @@
 #ifndef UART_READER_H
 #define UART_READER_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
 class UartReader {
 public:
@@ -10,13 +10,13 @@ public:
     ~UartReader();
 
     bool initialize();               // Ініціалізація UART
-    std::vector<uint8_t> readData(); // Читання даних
-    void closePort();                // Закриття UART
+    std::vector<uint8_t> readData(); // Читання даних з UART
+    void closePort();                // Закриття порту
 
 private:
     std::string portName;
     int baudRate;
-    int uartHandle;                  // Об'єкт UART
+    int uartHandle;                  // Дескриптор UART
 };
 
 #endif // UART_READER_H
