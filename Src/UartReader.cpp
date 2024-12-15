@@ -17,9 +17,8 @@ bool UartReader::initialize() {
     }
 
     // Створюємо буфер для зняття константності
-    char portBuffer[256];
-    strncpy(portBuffer, portName.c_str(), sizeof(portBuffer));
-    portBuffer[sizeof(portBuffer) - 1] = '\0';  // Гарантія завершення рядка
+    char portBuffer[256] = {0};  // Ініціалізуємо нулями
+    portName.copy(portBuffer, sizeof(portBuffer) - 1);
 
     // Відкриваємо UART порт
     uartHandle = serOpen(portBuffer, baudRate, 0);
