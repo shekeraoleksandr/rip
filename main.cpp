@@ -3,7 +3,7 @@
 
 int main() {
     const int dataPin = 18;  // GPIO-пін для зчитування
-    const int baudRate = 9600;  // Швидкість UART (наприклад, 9600 бод)
+    const int baudRate = 420000;  // Швидкість UART (наприклад, 9600 бод)
 
     UartReader uart(dataPin, baudRate);
 
