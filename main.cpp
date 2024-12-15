@@ -2,7 +2,7 @@
 #include "Src/UartReader.h"
 
 int main() {
-    const int dataPin = 18;  // GPIO-пін для зчитування
+    const int dataPin = 15;  // GPIO-пін для зчитування
     const int baudRate = 420000;  // Швидкість UART (наприклад, 9600 бод)
 
     UartReader uart(dataPin, baudRate);
