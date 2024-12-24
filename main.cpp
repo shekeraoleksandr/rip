@@ -1,50 +1,33 @@
-#include "Src/UartReader.h"
 #include <iostream>
-#include <thread>
-#include <atomic>
-
-// Глобальна змінна для контролю програми
-std::atomic<bool> running(true);
-
-void stopProgram() {
-    std::cout << "Press 'q' and Enter to stop the program..." << std::endl;
-    char input;
-    while (std::cin >> input) {
-        if (input == 'q') {
-            running = false;
-            break;
-        }
-    }
-}
+#include <vector>
+#include "UartReader.h"
+#include "UartWriter.h"
 
 int main() {
-    const std::string uartPort = "/dev/serial0";  // UART порт
-    const int baudRate = 420000;                 // Швидкість зв'язку
+    const std::string pultPort = "/dev/serial0";   // GPIO15 (RX)
+    const std::string modulePort = "/dev/ttyS0";  // GPIO14 (TX)
 
-    UartReader uartReader(uartPort, baudRate);
+    UartReader pultReader(pultPort, 420000);
+    UartWriter moduleWriter(modulePort, 420000);
 
-    if (!uartReader.initialize()) {
+    if (!pultReader.initialize() || !moduleWriter.initialize()) {
         return -1;
     }
 
-    // Запуск окремого потоку для зупинки програми
-    std::thread inputThread(stopProgram);
+    std::cout << "Listening for CRSF data on " << pultPort << "..." << std::endl;
 
-    while (running) {
-        auto data = uartReader.readData();
-
+    while (true) {
+        auto data = pultReader.readData();
         if (!data.empty()) {
-            std::cout << "Received: ";
-            for (uint8_t byte : data) {
-                std::cout << std::hex << std::uppercase << static_cast<int>(byte) << " ";
+            std::cout << "Received frame: ";
+            for (const auto& byte : data) {
+                std::cout << "0x" << std::hex << (int)byte << " ";
             }
             std::cout << std::endl;
+
+            moduleWriter.writeData(data); // Передача даних до зовнішнього модуля
         }
     }
 
-    // Чекаємо завершення потоку
-    inputThread.join();
-
-    std::cout << "Program stopped." << std::endl;
     return 0;
 }
