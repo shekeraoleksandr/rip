@@ -7,6 +7,8 @@ include_directories(include)
 
 add_executable(UartCommunication
         src/main.cpp
+        src/UartReader.h
+        src/UartWriter.h
         src/UartReader.cpp
         src/UartWriter.cpp
 )
