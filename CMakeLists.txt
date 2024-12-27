@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(include)
 
 add_executable(UartCommunication
-        src/main.cpp
+        main.cpp
         src/UartReader.h
         src/UartWriter.h
         src/UartReader.cpp
