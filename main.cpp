@@ -8,7 +8,7 @@ std::atomic<bool> running(true);
 
 int main() {
     UartReader reader("/dev/serial0"); // GPIO15 (RX)
-    UartWriter writer("/dev/serial1"); // GPIO14 (TX)
+    UartWriter writer("/dev/serial0"); // GPIO14 (TX)
 
     if (!reader.initialize() || !writer.initialize()) {
         return -1;

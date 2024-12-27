@@ -27,8 +27,8 @@ bool UartWriter::initialize() {
 
     struct termios options;
     tcgetattr(uart_fd, &options);
-    cfsetispeed(&options, B115200);
-    cfsetospeed(&options, B115200);
+    cfsetispeed(&options, B500000);
+    cfsetospeed(&options, B500000);
     options.c_cflag |= (CLOCAL | CREAD);
     options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8;
