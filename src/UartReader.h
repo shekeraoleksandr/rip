@@ -1,19 +1,21 @@
 #ifndef UART_READER_H
 #define UART_READER_H
 
+#include <vector>
 #include <string>
 
 class UartReader {
-private:
-    int uart_fd;
-    std::string portName;
-
 public:
-    UartReader(const std::string &port);
+    UartReader(const std::string& port, int baudRate);
     ~UartReader();
 
     bool initialize();
-    void readData();
+    std::vector<uint8_t> readFrame();
+
+private:
+    std::string portName;
+    int baudRate;
+    int uartFd;  // UART file descriptor
 };
 
 #endif // UART_READER_H

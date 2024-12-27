@@ -1,58 +1,54 @@
 #include "UartWriter.h"
 #include <iostream>
 #include <fcntl.h>
-#include <termios.h>
 #include <unistd.h>
-#include <vector>
-#include <atomic>
-#include <thread>
-#include <chrono>
+#include <termios.h>
 
-extern std::atomic<bool> running;
-
-UartWriter::UartWriter(const std::string &port) : portName(port), uart_fd(-1) {}
+UartWriter::UartWriter(const std::string& port, int baudRate)
+    : portName(port), baudRate(baudRate), uartFd(-1) {}
 
 UartWriter::~UartWriter() {
-    if (uart_fd != -1) {
-        close(uart_fd);
+    if (uartFd != -1) {
+        close(uartFd);
     }
 }
 
 bool UartWriter::initialize() {
-    uart_fd = open(portName.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
-    if (uart_fd == -1) {
+    uartFd = open(portName.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
+    if (uartFd < 0) {
         std::cerr << "Error: Unable to open UART port: " << portName << std::endl;
         return false;
     }
 
-    struct termios options;
-    tcgetattr(uart_fd, &options);
-    cfsetispeed(&options, B500000);
-    cfsetospeed(&options, B500000);
-    options.c_cflag |= (CLOCAL | CREAD);
-    options.c_cflag &= ~CSIZE;
-    options.c_cflag |= CS8;
-    options.c_cflag &= ~PARENB;
-    options.c_cflag &= ~CSTOPB;
-    options.c_cflag &= ~CRTSCTS;
-    tcsetattr(uart_fd, TCSANOW, &options);
+    struct termios tty {};
+    if (tcgetattr(uartFd, &tty) != 0) {
+        std::cerr << "Error: Failed to get attributes for UART port." << std::endl;
+        close(uartFd);
+        uartFd = -1;
+        return false;
+    }
+
+    cfsetospeed(&tty, baudRate);
+    cfsetispeed(&tty, baudRate);
+
+    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8; // 8-bit chars
+    tty.c_iflag &= ~IGNBRK;                     // Disable break processing
+    tty.c_lflag = 0;                            // No signaling chars, no echo
+    tty.c_oflag = 0;                            // No remapping, no delays
+    tty.c_cc[VMIN] = 1;                         // Read at least 1 byte
+    tty.c_cc[VTIME] = 0;                        // No timeout
+
+    tcflush(uartFd, TCIFLUSH);
+    if (tcsetattr(uartFd, TCSANOW, &tty) != 0) {
+        std::cerr << "Error: Failed to set attributes for UART port." << std::endl;
+        close(uartFd);
+        uartFd = -1;
+        return false;
+    }
 
     return true;
 }
 
-void UartWriter::writeData() {
-    while (running) {
-        std::vector<uint8_t> frame = {0xAA, 0xBB, 0xCC, 0xDD}; // Example data
-        int bytesWritten = write(uart_fd, frame.data(), frame.size());
-        if (bytesWritten < 0) {
-            std::cerr << "Error writing to UART." << std::endl;
-        } else {
-            std::cout << "Sent frame: ";
-            for (auto byte : frame) {
-                std::cout << std::hex << static_cast<int>(byte) << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+void UartWriter::writeFrame(const std::vector<uint8_t>& frame) {
+    write(uartFd, frame.data(), frame.size());
 }

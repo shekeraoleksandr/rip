@@ -1,54 +1,59 @@
 #include "UartReader.h"
 #include <iostream>
 #include <fcntl.h>
-#include <termios.h>
 #include <unistd.h>
-#include <atomic>
+#include <termios.h>
 
-extern std::atomic<bool> running;
-
-UartReader::UartReader(const std::string &port) : portName(port), uart_fd(-1) {}
+UartReader::UartReader(const std::string& port, int baudRate)
+    : portName(port), baudRate(baudRate), uartFd(-1) {}
 
 UartReader::~UartReader() {
-    if (uart_fd != -1) {
-        close(uart_fd);
+    if (uartFd != -1) {
+        close(uartFd);
     }
 }
 
 bool UartReader::initialize() {
-    uart_fd = open(portName.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
-    if (uart_fd == -1) {
+    uartFd = open(portName.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
+    if (uartFd < 0) {
         std::cerr << "Error: Unable to open UART port: " << portName << std::endl;
         return false;
     }
 
-    struct termios options;
-    tcgetattr(uart_fd, &options);
-    cfsetispeed(&options, B500000);
-    cfsetospeed(&options, B500000);
-    options.c_cflag |= (CLOCAL | CREAD);
-    options.c_cflag &= ~CSIZE;
-    options.c_cflag |= CS8;
-    options.c_cflag &= ~PARENB;
-    options.c_cflag &= ~CSTOPB;
-    options.c_cflag &= ~CRTSCTS;
-    tcsetattr(uart_fd, TCSANOW, &options);
+    struct termios tty {};
+    if (tcgetattr(uartFd, &tty) != 0) {
+        std::cerr << "Error: Failed to get attributes for UART port." << std::endl;
+        close(uartFd);
+        uartFd = -1;
+        return false;
+    }
+
+    cfsetospeed(&tty, baudRate);
+    cfsetispeed(&tty, baudRate);
+
+    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8; // 8-bit chars
+    tty.c_iflag &= ~IGNBRK;                     // Disable break processing
+    tty.c_lflag = 0;                            // No signaling chars, no echo
+    tty.c_oflag = 0;                            // No remapping, no delays
+    tty.c_cc[VMIN] = 1;                         // Read at least 1 byte
+    tty.c_cc[VTIME] = 0;                        // No timeout
+
+    tcflush(uartFd, TCIFLUSH);
+    if (tcsetattr(uartFd, TCSANOW, &tty) != 0) {
+        std::cerr << "Error: Failed to set attributes for UART port." << std::endl;
+        close(uartFd);
+        uartFd = -1;
+        return false;
+    }
 
     return true;
 }
 
-void UartReader::readData() {
+std::vector<uint8_t> UartReader::readFrame() {
     uint8_t buffer[256];
-    while (running) {
-        int bytesRead = read(uart_fd, buffer, sizeof(buffer));
-        if (bytesRead > 0) {
-            std::cout << "Received: ";
-            for (int i = 0; i < bytesRead; i++) {
-                std::cout << std::hex << static_cast<int>(buffer[i]) << " ";
-            }
-            std::cout << std::endl;
-        } else if (bytesRead < 0) {
-            std::cerr << "Error reading from UART." << std::endl;
-        }
+    ssize_t bytesRead = read(uartFd, buffer, sizeof(buffer));
+    if (bytesRead > 0) {
+        return std::vector<uint8_t>(buffer, buffer + bytesRead);
     }
+    return {};
 }

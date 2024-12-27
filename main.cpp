@@ -1,34 +1,27 @@
-#include "src/UartReader.h"
-#include "src/UartWriter.h"
 #include <iostream>
-#include <thread>
-#include <atomic>
-
-std::atomic<bool> running(true);
+#include "UartReader.h"
+#include "UartWriter.h"
 
 int main() {
-    UartReader reader("/dev/serial0"); // GPIO15 (RX)
-    UartWriter writer("/dev/serial0"); // GPIO14 (TX)
+    UartReader reader("/dev/serial0", B500000);  // Пульт
+    UartWriter writer("/dev/ttyAMA0", B500000); // Модуль
 
     if (!reader.initialize() || !writer.initialize()) {
+        std::cerr << "Error: Failed to initialize UART devices." << std::endl;
         return -1;
     }
 
-    std::thread readerThread(&UartReader::readData, &reader);
-    std::thread writerThread(&UartWriter::writeData, &writer);
-
-    std::cout << "Press 'q' and Enter to stop the program..." << std::endl;
-    char input;
-    while (std::cin >> input) {
-        if (input == 'q') {
-            running = false;
-            break;
+    while (true) {
+        auto frame = reader.readFrame();
+        if (!frame.empty()) {
+            writer.writeFrame(frame);
+            std::cout << "Forwarded frame: ";
+            for (const auto& byte : frame) {
+                std::cout << std::hex << static_cast<int>(byte) << " ";
+            }
+            std::cout << std::endl;
         }
     }
 
-    readerThread.join();
-    writerThread.join();
-
-    std::cout << "Program stopped." << std::endl;
     return 0;
 }
