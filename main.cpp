@@ -1,33 +1,34 @@
-#include <iostream>
-#include <vector>
 #include "UartReader.h"
 #include "UartWriter.h"
+#include <iostream>
+#include <thread>
+#include <atomic>
+
+std::atomic<bool> running(true);
 
 int main() {
-    const std::string pultPort = "/dev/serial0";   // GPIO15 (RX)
-    const std::string modulePort = "/dev/ttyS0";  // GPIO14 (TX)
+    UartReader reader("/dev/serial0"); // GPIO15 (RX)
+    UartWriter writer("/dev/serial1"); // GPIO14 (TX)
 
-    UartReader pultReader(pultPort, 420000);
-    UartWriter moduleWriter(modulePort, 420000);
-
-    if (!pultReader.initialize() || !moduleWriter.initialize()) {
+    if (!reader.initialize() || !writer.initialize()) {
         return -1;
     }
 
-    std::cout << "Listening for CRSF data on " << pultPort << "..." << std::endl;
+    std::thread readerThread(&UartReader::readData, &reader);
+    std::thread writerThread(&UartWriter::writeData, &writer);
 
-    while (true) {
-        auto data = pultReader.readData();
-        if (!data.empty()) {
-            std::cout << "Received frame: ";
-            for (const auto& byte : data) {
-                std::cout << "0x" << std::hex << (int)byte << " ";
-            }
-            std::cout << std::endl;
-
-            moduleWriter.writeData(data); // Передача даних до зовнішнього модуля
+    std::cout << "Press 'q' and Enter to stop the program..." << std::endl;
+    char input;
+    while (std::cin >> input) {
+        if (input == 'q') {
+            running = false;
+            break;
         }
     }
 
+    readerThread.join();
+    writerThread.join();
+
+    std::cout << "Program stopped." << std::endl;
     return 0;
 }

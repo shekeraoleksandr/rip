@@ -3,4 +3,10 @@ project(UartCommunication)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(UartCommunication main.cpp UartReader.cpp UartWriter.cpp)
+include_directories(include)
+
+add_executable(UartCommunication
+        src/main.cpp
+        src/UartReader.cpp
+        src/UartWriter.cpp
+)
