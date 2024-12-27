@@ -1,4 +1,9 @@
 #include <iostream>
+#include <iostream>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+#include <atomic>
 #include "src/UartReader.h"
 #include "src/UartWriter.h"
 
