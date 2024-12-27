@@ -1,6 +1,6 @@
 #include <iostream>
-#include "UartReader.h"
-#include "UartWriter.h"
+#include "src/UartReader.h"
+#include "src/UartWriter.h"
 
 int main() {
     UartReader reader("/dev/serial0", B500000);  // Пульт
