@@ -20,11 +20,24 @@ int main() {
         auto frame = reader.readFrame();
         if (!frame.empty()) {
             writer.writeFrame(frame);
-            std::cout << "Forwarded frame: ";
-            for (const auto& byte : frame) {
-                std::cout << std::hex << static_cast<int>(byte) << " ";
+
+            // Буфер для зберігання байтів по 64
+            std::vector<uint8_t> buffer;
+            buffer.insert(buffer.end(), frame.begin(), frame.end());
+
+            // Виводимо дані блоками по 64 байти
+            size_t totalBytes = buffer.size();
+            for (size_t i = 0; i < totalBytes; i += 64) {
+                size_t blockSize = std::min(64UL, totalBytes - i);
+                std::cout << "Forwarded block: ";
+                for (size_t j = 0; j < blockSize; ++j) {
+                    std::cout << std::hex << static_cast<int>(buffer[i + j]) << " ";
+                }
+                std::cout << std::endl;
             }
-            std::cout << std::endl;
+
+            // Очищуємо буфер після виводу
+            buffer.clear();
         }
     }
 
