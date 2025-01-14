@@ -18,8 +18,8 @@ int main() {
 
     while (true) {
         auto frame = reader.readFrame();
-        if (!frame.empty()) {
-            writer.writeFrame(frame);
+        // if (!frame.empty()) {
+        //     writer.writeFrame(frame);
 
             // Буфер для зберігання байтів по 64
             std::vector<uint8_t> buffer;
